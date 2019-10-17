@@ -4,17 +4,20 @@ sealed class AstBuilder {
     abstract fun append(node: AstNode)
     abstract fun build(): AstNode
 
-    class RootAstBuilder : AstBuilder() {
+    abstract class UnaryAstBuilder : AstBuilder() {
         var child: AstNode? = null
 
         override fun append(node: AstNode) {
             when (child) {
                 null -> child = node
-                else -> throw IllegalStateException("RootAstBuilder can accept only 1 child")
+                else -> throw IllegalStateException("UnaryAstBuilder can accept only 1 child")
             }
         }
 
-        override fun build() = child ?: throw IllegalStateException("No child was provided for ${this::class.java}")
+        fun checkFull(): AstNode {
+            check(child != null) { "No child was provided for ${this::class.java}" }
+            return child!!
+        }
     }
 
     abstract class BinaryAstBuilder : AstBuilder() {
@@ -36,6 +39,14 @@ sealed class AstBuilder {
         }
     }
 
+    class RootAstBuilder : UnaryAstBuilder() {
+        override fun build() = checkFull()
+    }
+
+    class NotBuilder : UnaryAstBuilder() {
+        override fun build() = NotNode(checkFull())
+    }
+
     class OrBuilder : BinaryAstBuilder() {
         override fun build() = checkFull().let { (left, right) -> OrNode(left, right) }
     }
@@ -47,10 +58,20 @@ sealed class AstBuilder {
     class ArrowBuilder : BinaryAstBuilder() {
         override fun build() = checkFull().let { (left, right) -> ArrowNode(left, right) }
     }
+
+    operator fun AstNode.unaryPlus() {
+        append(this)
+    }
 }
 
 fun AstBuilder.lit(name: String) {
     append(LiteralNode(name))
+}
+
+fun AstBuilder.not(block: AstBuilder.NotBuilder.() -> Unit) {
+    val builder = AstBuilder.NotBuilder()
+    builder.block()
+    append(builder.build())
 }
 
 fun AstBuilder.or(block: AstBuilder.OrBuilder.() -> Unit) {

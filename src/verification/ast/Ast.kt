@@ -4,6 +4,8 @@ sealed class AstNode
 
 class LiteralNode(val name: String) : AstNode()
 
+class NotNode(val child: AstNode) : AstNode()
+
 class OrNode(val left: AstNode, val right: AstNode) : AstNode()
 
 class AndNode(val left: AstNode, val right: AstNode) : AstNode()

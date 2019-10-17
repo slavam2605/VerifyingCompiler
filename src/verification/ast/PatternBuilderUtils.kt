@@ -4,17 +4,20 @@ sealed class PatternBuilder {
     abstract fun append(node: PatternAst)
     abstract fun build(): PatternAst
 
-    class RootPatternBuilder : PatternBuilder() {
+    abstract class UnaryPatternBuilder : PatternBuilder() {
         var child: PatternAst? = null
 
         override fun append(node: PatternAst) {
             when (child) {
                 null -> child = node
-                else -> throw IllegalStateException("RootAstBuilder can accept only 1 child")
+                else -> throw IllegalStateException("UnaryPatternBuilder can accept only 1 child")
             }
         }
 
-        override fun build() = child ?: throw IllegalStateException("No child was provided for ${this::class.java}")
+        fun checkFull(): PatternAst {
+            check(child != null) { "No child was provided for ${this::class.java}" }
+            return child!!
+        }
     }
 
     abstract class BinaryPatternBuilder : PatternBuilder() {
@@ -36,6 +39,14 @@ sealed class PatternBuilder {
         }
     }
 
+    class RootPatternBuilder : UnaryPatternBuilder() {
+        override fun build() = checkFull()
+    }
+
+    class NotPatternBuilder : UnaryPatternBuilder() {
+        override fun build() = NotPattern(checkFull())
+    }
+
     class OrBuilder : BinaryPatternBuilder() {
         override fun build() = checkFull().let { (left, right) -> OrPattern(left, right) }
     }
@@ -47,10 +58,24 @@ sealed class PatternBuilder {
     class ArrowBuilder : BinaryPatternBuilder() {
         override fun build() = checkFull().let { (left, right) -> ArrowPattern(left, right) }
     }
+
+    operator fun PatternAst.unaryPlus() {
+        append(this)
+    }
+}
+
+fun PatternBuilder.lit(name: String) {
+    append(LiteralPattern(name))
 }
 
 fun PatternBuilder.leaf(name: String) {
     append(LeafPattern(name))
+}
+
+fun PatternBuilder.not(block: PatternBuilder.NotPatternBuilder.() -> Unit) {
+    val builder = PatternBuilder.NotPatternBuilder()
+    builder.block()
+    append(builder.build())
 }
 
 fun PatternBuilder.or(block: PatternBuilder.OrBuilder.() -> Unit) {

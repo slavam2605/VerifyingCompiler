@@ -2,7 +2,11 @@ package verification.ast
 
 sealed class PatternAst
 
+class LiteralPattern(val name: String) : PatternAst()
+
 class LeafPattern(val name: String) : PatternAst()
+
+class NotPattern(val child: PatternAst) : PatternAst()
 
 class OrPattern(val left: PatternAst, val right: PatternAst) : PatternAst()
 

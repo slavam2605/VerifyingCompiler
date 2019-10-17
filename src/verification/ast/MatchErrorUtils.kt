@@ -15,7 +15,7 @@ sealed class MatchErrorDescription {
         val actualValue: AstNode
     ) : MatchErrorDescription() {
         override fun description() =
-            "Expected '<expr> $expectedOp <expr>', found: '${actualValue.prettyFormat()}'"
+            "Expected '$expectedOp', found: '${actualValue.prettyFormat()}'"
     }
 
     abstract fun description(): String
