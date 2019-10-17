@@ -4,6 +4,7 @@ import org.junit.Test
 import verification.ast.arrow
 import verification.ast.buildAst
 import verification.ast.lit
+import verification.ast.not
 
 internal class VerificationTest : VerificationTestBase() {
     @Test
@@ -14,7 +15,7 @@ internal class VerificationTest : VerificationTestBase() {
             lit(a)
         } }
 
-        val proof = mutableListOf(
+        val proof = mutableListOf<ProofElement>(
             buildAst { arrow {
                 lit(a)
                 +aa
@@ -53,6 +54,56 @@ internal class VerificationTest : VerificationTestBase() {
                 +aa
             } },
             aa
+        )
+
+        assertSucceededStrong(proof)
+    }
+
+    @Test
+    fun `(a - b) - (!b - !a)`() {
+        val a = "x"
+        val b = "y"
+
+        val proof = mutableListOf(
+            buildAst { arrow {
+                arrow {
+                    lit(a)
+                    lit(b)
+                }
+                arrow {
+                    arrow {
+                        lit(a)
+                        not { lit(b) }
+                    }
+                    not { lit(a) }
+                }
+            } },
+            ProofBlock(buildAst { arrow {
+                lit(a)
+                lit(b)
+            } }, listOf(
+                buildAst { arrow {
+                    arrow {
+                        lit(a)
+                        not { lit(b) }
+                    }
+                    not { lit(a) }
+                } },
+                buildAst { arrow {
+                    not { lit(b) }
+                    arrow {
+                        lit(a)
+                        not { lit(b) }
+                    }
+                } },
+                ProofBlock(buildAst { not { lit(b) } }, listOf(
+                    buildAst { arrow {
+                        lit(a)
+                        not { lit(b) }
+                    } },
+                    buildAst { not { lit(a) } }
+                ))
+            ))
         )
 
         assertSucceededStrong(proof)

@@ -1,6 +1,8 @@
 package verification.ast
 
-sealed class AstNode
+import verification.proof.ProofElement
+
+sealed class AstNode : ProofElement
 
 class LiteralNode(val name: String) : AstNode()
 
