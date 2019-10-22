@@ -25,5 +25,6 @@ codeStatement
     ;
 
 codeExpression
-    :   INT #intLiteral
+    :   INT             #intLiteral
+    |   name=IDENT      #symbolReference
     ;

@@ -17,7 +17,7 @@ fun parseString(text: String): FunctionDeclarationAstNode {
 private class AstBuildingVisitor : MainParserBaseVisitor<AstNode>() {
     override fun visitType(ctx: TypeContext) = TypeAstNode(ctx.name.text)
 
-    override fun visitFunctionParameter(ctx: FunctionParameterContext) = ParameterAstNode(
+    override fun visitFunctionParameter(ctx: FunctionParameterContext) = FunctionParameterAstNode(
         ctx.name.text, visitType(ctx.type())
     )
 
@@ -32,6 +32,8 @@ private class AstBuildingVisitor : MainParserBaseVisitor<AstNode>() {
     )
 
     override fun visitIntLiteral(ctx: IntLiteralContext) = IntegerLiteralAstNode(ctx.INT().text)
+
+    override fun visitSymbolReference(ctx: SymbolReferenceContext) = SymbolReferenceAstNode(ctx.name.text)
 
     fun visitCodeStatement(tree: ParseTree) = visit(tree) as CodeStatementAstNode
     fun visitCodeExpression(tree: ParseTree) = visit(tree) as CodeExpressionAstNode

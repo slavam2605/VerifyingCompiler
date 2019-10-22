@@ -1,30 +1,32 @@
 package verification.ast
 
+import compiler.ast.*
+
 sealed class AstBuilder {
-    abstract fun append(node: AstNode)
-    abstract fun build(): AstNode
+    abstract fun append(node: ProofAstNode)
+    abstract fun build(): ProofAstNode
 
     abstract class UnaryAstBuilder : AstBuilder() {
-        var child: AstNode? = null
+        var child: ProofAstNode? = null
 
-        override fun append(node: AstNode) {
+        override fun append(node: ProofAstNode) {
             when (child) {
                 null -> child = node
                 else -> throw IllegalStateException("UnaryAstBuilder can accept only 1 child")
             }
         }
 
-        fun checkFull(): AstNode {
+        fun checkFull(): ProofAstNode {
             check(child != null) { "No child was provided for ${this::class.java}" }
             return child!!
         }
     }
 
     abstract class BinaryAstBuilder : AstBuilder() {
-        var left: AstNode? = null
-        var right: AstNode? = null
+        var left: ProofAstNode? = null
+        var right: ProofAstNode? = null
 
-        override fun append(node: AstNode) {
+        override fun append(node: ProofAstNode) {
             when {
                 left == null -> left = node
                 right == null -> right = node
@@ -32,7 +34,7 @@ sealed class AstBuilder {
             }
         }
 
-        fun checkFull(): Pair<AstNode, AstNode> {
+        fun checkFull(): Pair<ProofAstNode, ProofAstNode> {
             check(left != null) { "No child was provided for ${this::class.java}" }
             check(right != null) { "Only one child was provided for ${this::class.java}" }
             return left!! to right!!
@@ -44,28 +46,28 @@ sealed class AstBuilder {
     }
 
     class NotBuilder : UnaryAstBuilder() {
-        override fun build() = NotNode(checkFull())
+        override fun build() = ProofNotNode(checkFull())
     }
 
     class OrBuilder : BinaryAstBuilder() {
-        override fun build() = checkFull().let { (left, right) -> OrNode(left, right) }
+        override fun build() = checkFull().let { (left, right) -> ProofOrNode(left, right) }
     }
 
     class AndBuilder : BinaryAstBuilder() {
-        override fun build() = checkFull().let { (left, right) -> AndNode(left, right) }
+        override fun build() = checkFull().let { (left, right) -> ProofAndNode(left, right) }
     }
 
     class ArrowBuilder : BinaryAstBuilder() {
-        override fun build() = checkFull().let { (left, right) -> ArrowNode(left, right) }
+        override fun build() = checkFull().let { (left, right) -> ProofArrowNode(left, right) }
     }
 
-    operator fun AstNode.unaryPlus() {
+    operator fun ProofAstNode.unaryPlus() {
         append(this)
     }
 }
 
 fun AstBuilder.lit(name: String) {
-    append(LiteralNode(name))
+    append(ProofLiteralNode(name))
 }
 
 fun AstBuilder.not(block: AstBuilder.NotBuilder.() -> Unit) {
@@ -92,7 +94,7 @@ fun AstBuilder.arrow(block: AstBuilder.ArrowBuilder.() -> Unit) {
     append(builder.build())
 }
 
-fun buildAst(block: AstBuilder.() -> Unit): AstNode {
+fun buildAst(block: AstBuilder.() -> Unit): ProofAstNode {
     val builder = AstBuilder.RootAstBuilder()
     builder.block()
     return builder.build()

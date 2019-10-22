@@ -1,7 +1,6 @@
 package verification.proof
 
 import junit.assertTrue
-import verification.ast.AstNode
 import verification.ast.arrow
 import verification.ast.buildAst
 import verification.ast.lit

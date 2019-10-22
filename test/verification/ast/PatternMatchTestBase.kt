@@ -1,10 +1,11 @@
 package verification.ast
 
+import compiler.ast.ProofAstNode
 import junit.assertNotNull
 import junit.assertTrue
 
 internal abstract class PatternMatchTestBase {
-    protected fun assertSucceeded(ast: AstNode, pattern: PatternAst, assertBlock: MatchResult.Success.() -> Unit = { }) {
+    protected fun assertSucceeded(ast: ProofAstNode, pattern: PatternAst, assertBlock: MatchResult.Success.() -> Unit = { }) {
         val result = pattern.match(ast)
 
         assertTrue("Result must be a success", result is MatchResult.Success)
@@ -13,7 +14,7 @@ internal abstract class PatternMatchTestBase {
         println("Successfully matched: patternMap = ${result.patternMap.mapValues { it.value.prettyFormat() }}")
     }
 
-    protected inline fun <reified T> assertFailed(ast: AstNode, pattern: PatternAst, assertBlock: T.() -> Boolean = { true }) {
+    protected inline fun <reified T> assertFailed(ast: ProofAstNode, pattern: PatternAst, assertBlock: T.() -> Boolean = { true }) {
         val result = pattern.match(ast)
 
         assertTrue("Result must be a failure", result is MatchResult.Failure)
@@ -23,7 +24,7 @@ internal abstract class PatternMatchTestBase {
         println("Match successfully failed with the following description: ${result.description}")
     }
 
-    protected fun MatchResult.Success.expectValue(name: String, value: AstNode) {
+    protected fun MatchResult.Success.expectValue(name: String, value: ProofAstNode) {
         val actualValue = patternMap[name]
 
         assertNotNull("Value must be in the patternMap", actualValue)

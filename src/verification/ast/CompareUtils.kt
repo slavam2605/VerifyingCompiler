@@ -1,26 +1,27 @@
 package verification.ast
 
+import compiler.ast.*
 import verification.ast.MatchErrorDescription.*
 
-fun AstNode.deepEquals(other: AstNode): Boolean {
+fun ProofAstNode.deepEquals(other: ProofAstNode): Boolean {
     if (javaClass != other.javaClass)
         return false
 
     return when (this) {
-        is LiteralNode -> name == (other as LiteralNode).name
-        is NotNode -> child.deepEquals((other as NotNode).child)
-        is OrNode -> left.deepEquals((other as OrNode).left) && right.deepEquals(other.right)
-        is AndNode -> left.deepEquals((other as AndNode).left) && right.deepEquals(other.right)
-        is ArrowNode -> left.deepEquals((other as ArrowNode).left) && right.deepEquals(other.right)
+        is ProofLiteralNode -> name == (other as ProofLiteralNode).name
+        is ProofNotNode -> child.deepEquals((other as ProofNotNode).child)
+        is ProofOrNode -> left.deepEquals((other as ProofOrNode).left) && right.deepEquals(other.right)
+        is ProofAndNode -> left.deepEquals((other as ProofAndNode).left) && right.deepEquals(other.right)
+        is ProofArrowNode -> left.deepEquals((other as ProofArrowNode).left) && right.deepEquals(other.right)
     }
 }
 
-fun PatternAst.match(ast: AstNode): MatchResult {
-    val patternMap = mutableMapOf<String, AstNode>()
-    fun internalMatch(patternAst: PatternAst, ast: AstNode): MatchErrorDescription? {
+fun PatternAst.match(ast: ProofAstNode): MatchResult {
+    val patternMap = mutableMapOf<String, ProofAstNode>()
+    fun internalMatch(patternAst: PatternAst, ast: ProofAstNode): MatchErrorDescription? {
         return when (patternAst) {
             is LiteralPattern -> {
-                if (ast !is LiteralNode || ast.name != patternAst.name)
+                if (ast !is ProofLiteralNode || ast.name != patternAst.name)
                     WrongTopLevelNode("LiteralNode[${patternAst.name}]", ast)
                 else
                     null
@@ -37,25 +38,25 @@ fun PatternAst.match(ast: AstNode): MatchResult {
                     null
             }
             is NotPattern -> {
-                if (ast !is NotNode)
+                if (ast !is ProofNotNode)
                     WrongTopLevelNode("!", ast)
                 else
                     internalMatch(patternAst.child, ast.child)
             }
             is OrPattern -> {
-                if (ast !is OrNode)
+                if (ast !is ProofOrNode)
                     WrongTopLevelNode("||", ast)
                 else
                     internalMatch(patternAst.left, ast.left) ?: internalMatch(patternAst.right, ast.right)
             }
             is AndPattern -> {
-                if (ast !is AndNode)
+                if (ast !is ProofAndNode)
                     WrongTopLevelNode("&&", ast)
                 else
                     internalMatch(patternAst.left, ast.left) ?: internalMatch(patternAst.right, ast.right)
             }
             is ArrowPattern -> {
-                if (ast !is ArrowNode)
+                if (ast !is ProofArrowNode)
                     WrongTopLevelNode("->", ast)
                 else
                     internalMatch(patternAst.left, ast.left) ?: internalMatch(patternAst.right, ast.right)
@@ -70,6 +71,6 @@ fun PatternAst.match(ast: AstNode): MatchResult {
 }
 
 sealed class MatchResult {
-    class Success(val patternMap: Map<String, AstNode>) : MatchResult()
+    class Success(val patternMap: Map<String, ProofAstNode>) : MatchResult()
     class Failure(val description: MatchErrorDescription) : MatchResult()
 }

@@ -1,9 +1,9 @@
 package verification.proof
 
-import verification.ast.AstNode
+import compiler.ast.ProofAstNode
 
 sealed class VerificationResult {
-    class Success(val provedResult: AstNode) : VerificationResult()
+    class Success(val provedResult: ProofAstNode) : VerificationResult()
 
     class Failure : VerificationResult()
 }

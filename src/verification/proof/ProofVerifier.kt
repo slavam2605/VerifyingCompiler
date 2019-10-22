@@ -1,21 +1,23 @@
 package verification.proof
 
+import compiler.ast.ProofLiteralNode
+import compiler.ast.ProofAstNode
 import verification.ast.*
 import kotlin.test.fail
 
 interface ProofElement
 
-class ProofBlock(val preposition: AstNode, val subProof: List<ProofElement>) : ProofElement
+class ProofBlock(val preposition: ProofAstNode, val subProof: List<ProofElement>) : ProofElement
 
-class ProofVerifier(private val context: List<AstNode>, private val proof: List<ProofElement>) {
+class ProofVerifier(private val context: List<ProofAstNode>, private val proof: List<ProofElement>) {
     private val axioms = basicAxioms
     private val rules = listOf(modusPonens)
-    private val verifiedProof = mutableListOf<AstNode>()
+    private val verifiedProof = mutableListOf<ProofAstNode>()
 
     fun verify(): VerificationResult {
         loop@ for (index in 0 until proof.size) {
             when (val statement = proof[index]) {
-                is AstNode -> {
+                is ProofAstNode -> {
                     if (checkInContext(statement) || checkIsAxiom(statement) || checkByRule(statement)) {
                         verifiedProof.add(statement)
                         continue@loop
@@ -41,14 +43,14 @@ class ProofVerifier(private val context: List<AstNode>, private val proof: List<
         return VerificationResult.Success(verifiedProof.last())
     }
 
-    private fun checkByRule(statement: AstNode): Boolean {
+    private fun checkByRule(statement: ProofAstNode): Boolean {
         for (rule in rules) {
             val resultResult = rule.consequence.match(statement) as? MatchResult.Success
                 ?: continue
 
             val resultMap = resultResult.patternMap
             val prepCount = rule.prepositions.size
-            val prepositionCandidates = Array<AstNode>(prepCount) { LiteralNode("!failure!") }
+            val prepositionCandidates = Array<ProofAstNode>(prepCount) { ProofLiteralNode("!failure!") }
             val matchResults = Array(prepCount) { MatchResult.Success(mapOf()) }
 
             fun findNextCandidate(index: Int): Boolean {
@@ -94,7 +96,7 @@ class ProofVerifier(private val context: List<AstNode>, private val proof: List<
         return false
     }
 
-    private fun checkIsAxiom(statement: AstNode): Boolean {
+    private fun checkIsAxiom(statement: ProofAstNode): Boolean {
         for (axiom in axioms) {
             if (axiom.match(statement) is MatchResult.Success) {
                 println("Successful match: '${statement.prettyFormat()}' is '${axiom.prettyFormat()}'")
@@ -104,7 +106,7 @@ class ProofVerifier(private val context: List<AstNode>, private val proof: List<
         return false
     }
 
-    private fun checkInContext(statement: AstNode): Boolean {
+    private fun checkInContext(statement: ProofAstNode): Boolean {
         for (element in context) {
             if (element.deepEquals(statement)) {
                 println("Successfully found in context: '${statement.prettyFormat()}'")
