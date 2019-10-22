@@ -1,11 +1,16 @@
 package compiler
 
+import compiler.resolved.FunctionDescriptor
 import compiler.resolved.ResolvedDescriptor
 
 class ResolutionContext {
     private val layers = mutableListOf(
         ContextLayer() // top-level declarations
     )
+    private var currentFunction: FunctionDescriptor? = null
+
+    val currentFunctionNotNull
+        get() = currentFunction!!
 
     fun <T> withLayer(block: () -> T): T {
         addLayer()
@@ -13,6 +18,21 @@ class ResolutionContext {
             block()
         } finally {
             dropLayer()
+        }
+    }
+
+    fun <T> withFunctionLayer(descriptor: FunctionDescriptor, block: () -> T): T {
+        currentFunction = descriptor
+        return try {
+            withLayer {
+                descriptor.ast.parameters.forEach { parameter ->
+                    addDeclaration(parameter.name, parameter.descriptor)
+                }
+
+                block()
+            }
+        } finally {
+            currentFunction = null
         }
     }
 

@@ -5,10 +5,10 @@ import compiler.ast.*
 fun ProofAstNode.toPattern(): PatternAst {
     return when (this) {
         is ProofLiteralNode -> LiteralPattern(name)
-        is ProofNotNode -> NotPattern(child.toPattern())
-        is ProofOrNode -> OrPattern(left.toPattern(), right.toPattern())
-        is ProofAndNode -> AndPattern(left.toPattern(), right.toPattern())
-        is ProofArrowNode -> ArrowPattern(left.toPattern(), right.toPattern())
+        is NotNode -> NotPattern(child.toPattern())
+        is OrNode -> OrPattern(left.toPattern(), right.toPattern())
+        is AndNode -> AndPattern(left.toPattern(), right.toPattern())
+        is ArrowNode -> ArrowPattern(left.toPattern(), right.toPattern())
     }
 }
 

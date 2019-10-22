@@ -9,10 +9,10 @@ fun ProofAstNode.deepEquals(other: ProofAstNode): Boolean {
 
     return when (this) {
         is ProofLiteralNode -> name == (other as ProofLiteralNode).name
-        is ProofNotNode -> child.deepEquals((other as ProofNotNode).child)
-        is ProofOrNode -> left.deepEquals((other as ProofOrNode).left) && right.deepEquals(other.right)
-        is ProofAndNode -> left.deepEquals((other as ProofAndNode).left) && right.deepEquals(other.right)
-        is ProofArrowNode -> left.deepEquals((other as ProofArrowNode).left) && right.deepEquals(other.right)
+        is NotNode -> child.deepEquals((other as NotNode).child)
+        is OrNode -> left.deepEquals((other as OrNode).left) && right.deepEquals(other.right)
+        is AndNode -> left.deepEquals((other as AndNode).left) && right.deepEquals(other.right)
+        is ArrowNode -> left.deepEquals((other as ArrowNode).left) && right.deepEquals(other.right)
     }
 }
 
@@ -38,25 +38,25 @@ fun PatternAst.match(ast: ProofAstNode): MatchResult {
                     null
             }
             is NotPattern -> {
-                if (ast !is ProofNotNode)
+                if (ast !is NotNode)
                     WrongTopLevelNode("!", ast)
                 else
                     internalMatch(patternAst.child, ast.child)
             }
             is OrPattern -> {
-                if (ast !is ProofOrNode)
+                if (ast !is OrNode)
                     WrongTopLevelNode("||", ast)
                 else
                     internalMatch(patternAst.left, ast.left) ?: internalMatch(patternAst.right, ast.right)
             }
             is AndPattern -> {
-                if (ast !is ProofAndNode)
+                if (ast !is AndNode)
                     WrongTopLevelNode("&&", ast)
                 else
                     internalMatch(patternAst.left, ast.left) ?: internalMatch(patternAst.right, ast.right)
             }
             is ArrowPattern -> {
-                if (ast !is ProofArrowNode)
+                if (ast !is ArrowNode)
                     WrongTopLevelNode("->", ast)
                 else
                     internalMatch(patternAst.left, ast.left) ?: internalMatch(patternAst.right, ast.right)

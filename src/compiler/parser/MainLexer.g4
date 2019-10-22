@@ -4,10 +4,16 @@ LPAREN:         '(';
 RPAREN:         ')';
 LBRACE:         '{';
 RBRACE:         '}';
+LSQBRACKET:     '[';
+RSQBRACKET:     ']';
 SEMICOLON:      ';';
 COLON:          ':';
 EQUAL:          '=';
 COMMA:          ',';
+EXCL:           '!';
+AND:            '&';
+OR:             '|';
+ARROW:          '->';
 
 FUN_KW:         'fun';
 VAR_KW:         'var';

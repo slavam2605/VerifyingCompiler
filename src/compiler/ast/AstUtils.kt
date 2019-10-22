@@ -5,7 +5,6 @@ import compiler.resolved.LocalVariableDescriptor
 import compiler.resolved.ResolvedDescriptor
 import compiler.resolved.TypeDescriptor
 import compiler.types.Type
-import verification.proof.ProofElement
 import kotlin.test.fail
 
 sealed class AstNode()
@@ -46,29 +45,29 @@ class VarDeclarationAstNode(
     }
 }
 
-sealed class CodeExpressionAstNode() : AstNode()
+sealed class CodeExpressionAstNode : AstNode()
 
 class IntegerLiteralAstNode(val value: String) : CodeExpressionAstNode()
 
 class SymbolReferenceAstNode(val name: String) : CodeExpressionAstNode()
 
+class NotNode(val child: CodeExpressionAstNode) : CodeExpressionAstNode()
+
+class OrNode(val left: CodeExpressionAstNode, val right: CodeExpressionAstNode) : CodeExpressionAstNode()
+
+class AndNode(val left: CodeExpressionAstNode, val right: CodeExpressionAstNode) : CodeExpressionAstNode()
+
+class ArrowNode(val left: CodeExpressionAstNode, val right: CodeExpressionAstNode) : CodeExpressionAstNode()
+
 class FunctionDeclarationAstNode(
     val name: String,
     val parameters: List<FunctionParameterAstNode>,
+    val inputContract: FunctionContractAstNode?,
     val returnType: TypeAstNode,
+    val outputContract: FunctionContractAstNode?,
     val body: CodeBlockAstNode
 ) : AstNode()
 
-/* ======================================== proof ast ======================================== */
-
-sealed class ProofAstNode : AstNode(), ProofElement
-
-class ProofLiteralNode(val name: String) : ProofAstNode()
-
-class ProofNotNode(val child: ProofAstNode) : ProofAstNode()
-
-class ProofOrNode(val left: ProofAstNode, val right: ProofAstNode) : ProofAstNode()
-
-class ProofAndNode(val left: ProofAstNode, val right: ProofAstNode) : ProofAstNode()
-
-class ProofArrowNode(val left: ProofAstNode, val right: ProofAstNode) : ProofAstNode()
+class FunctionContractAstNode(
+    val expressions: List<CodeExpressionAstNode>
+) : AstNode()

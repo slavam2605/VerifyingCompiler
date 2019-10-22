@@ -13,18 +13,28 @@ functionParameter
     ;
 
 function
-    :   'fun' name=IDENT '(' (parameters += functionParameter (',' parameters += functionParameter)*)? ')' ':' returnType=type codeBlock
+    :   'fun' name=IDENT '(' (parameters += functionParameter (',' parameters += functionParameter)*)? ')'
+        inputContract=functionContract? ':' returnType=type outputContract=functionContract? codeBlock
     ;
 
 codeBlock
-    :   '{' (statements += codeStatement) '}'
+    :   '{' (statements += codeStatement)* '}'
     ;
 
 codeStatement
-    :   'var' name=IDENT ':' type ('=' codeExpression)? #varDeclaration
+    :   'var' name=IDENT ':' type ('=' codeExpression)?     #varDeclaration
     ;
 
 codeExpression
-    :   INT             #intLiteral
-    |   name=IDENT      #symbolReference
+    :   INT                                                 #intLiteral
+    |   name=IDENT                                          #symbolReference
+    |   '!' codeExpression                                  #negate
+    |   '(' codeExpression ')'                              #paren
+    |   left=codeExpression '&' right=codeExpression        #and
+    |   left=codeExpression '|' right=codeExpression        #or
+    |   left=codeExpression '->' right=codeExpression       #arrow
+    ;
+
+functionContract
+    :   '[' (expressions += codeExpression (',' expressions += codeExpression)*)? ']'
     ;

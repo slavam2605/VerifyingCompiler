@@ -46,19 +46,19 @@ sealed class AstBuilder {
     }
 
     class NotBuilder : UnaryAstBuilder() {
-        override fun build() = ProofNotNode(checkFull())
+        override fun build() = NotNode(checkFull())
     }
 
     class OrBuilder : BinaryAstBuilder() {
-        override fun build() = checkFull().let { (left, right) -> ProofOrNode(left, right) }
+        override fun build() = checkFull().let { (left, right) -> OrNode(left, right) }
     }
 
     class AndBuilder : BinaryAstBuilder() {
-        override fun build() = checkFull().let { (left, right) -> ProofAndNode(left, right) }
+        override fun build() = checkFull().let { (left, right) -> AndNode(left, right) }
     }
 
     class ArrowBuilder : BinaryAstBuilder() {
-        override fun build() = checkFull().let { (left, right) -> ProofArrowNode(left, right) }
+        override fun build() = checkFull().let { (left, right) -> ArrowNode(left, right) }
     }
 
     operator fun ProofAstNode.unaryPlus() {

@@ -1,9 +1,7 @@
 package compiler
 
 import compiler.ast.*
-import compiler.resolved.FunctionParameterDescriptor
-import compiler.resolved.LocalVariableDescriptor
-import compiler.resolved.VariableDescriptor
+import compiler.resolved.*
 import compiler.types.Type
 import compiler.types.TypeChecker
 import compiler.types.prettyPrint
@@ -27,10 +25,16 @@ class CppCompiler {
             ast.returnType.descriptor.type.formatCppType(),
             ast.parameters.map { it.name to it.descriptor.type.formatCppType() }
         )
-        resolutionContext.withLayer {
-            ast.parameters.forEach { parameter ->
-                resolutionContext.addDeclaration(parameter.name, parameter.descriptor)
-            }
+
+        val resolvedInputContract = mutableListOf<ExpressionDescriptor>()
+        val resolvedOutputContract = mutableListOf<ExpressionDescriptor>()
+        val functionDescriptor = FunctionDescriptor(ast.name, resolvedInputContract, resolvedOutputContract, ast)
+        resolutionContext.addDeclaration(ast.name, functionDescriptor)
+
+        resolutionContext.withFunctionLayer(functionDescriptor) {
+            resolvedInputContract.addAll(ast.inputContract?.expressions?.map { resolveExpression(it) } ?: emptyList())
+            resolvedOutputContract.addAll(ast.outputContract?.expressions?.map { resolveExpression(it) } ?: emptyList())
+
             compileBlock(ast.body)
         }
     }
@@ -51,40 +55,102 @@ class CppCompiler {
 
     private fun compileVarDeclaration(ast: VarDeclarationAstNode) {
         val varType = ast.type.descriptor.type
-        val compiledExpression = ast.initializer?.let { compileExpression(it) }?.also {
-            if (!TypeChecker.areEqual(varType, it.type)) {
-                throw CompilationException("Wrong type: expected ${varType.prettyPrint()}, actual: ${it.type.prettyPrint()}")
+        if (ast.initializer == null) {
+            builder.appendVarDeclaration(varType.formatVarDeclaration(ast.name))
+        } else {
+            val expressionDescriptor = resolveExpression(ast.initializer)
+            if (!TypeChecker.areEqual(varType, expressionDescriptor.type)) {
+                throw CompilationException("Wrong type: expected ${varType.prettyPrint()}, actual: ${expressionDescriptor.type.prettyPrint()}")
             }
+
+            val compiledExpression = compileExpression(expressionDescriptor)
+            builder.appendVarDeclaration(
+                varType.formatVarDeclaration(ast.name),
+                compiledExpression
+            )
         }
-        builder.appendVarDeclaration(
-            varType.formatVarDeclaration(ast.name),
-            compiledExpression?.compiled
-        )
         resolutionContext.addDeclaration(ast.name, ast.descriptor)
     }
 
-    private fun compileExpression(ast: CodeExpressionAstNode): CompiledExpression {
-        return when (ast) {
-            is IntegerLiteralAstNode -> compileIntLiteral(ast)
-            is SymbolReferenceAstNode -> compileSymbolReference(ast)
+    private fun compileExpression(expression: ExpressionDescriptor): String {
+        if (expression is ProofExpressionOnly) {
+            throw CompilationException("Proof only expression could not be compiled: $expression")
+        }
+
+        return when (expression) {
+            is FunctionParameterDescriptor -> expression.name
+            is LocalVariableDescriptor -> expression.name
+            is IntegerLiteralDescriptor -> expression.value
+            is NotDescriptor -> "!(${compileExpression(expression.child)})"
+            is OrDescriptor -> "(${compileExpression(expression.left)}) | (${compileExpression(expression.right)})"
+            is AndDescriptor -> "(${compileExpression(expression.left)}) & (${compileExpression(expression.right)})"
+            is ArrowDescriptor -> "!(${compileExpression(expression.left)}) | (${compileExpression(expression.right)})"
+
+            // proof only expression
+            is ProofReturnValueDescriptor -> error("")
         }
     }
 
-    private fun compileSymbolReference(ast: SymbolReferenceAstNode): CompiledExpression {
+    /* ============================== expression resolution ============================== */
+
+    private fun resolveExpression(ast: CodeExpressionAstNode): ExpressionDescriptor {
+        return when (ast) {
+            is IntegerLiteralAstNode -> resolveIntLiteral(ast)
+            is SymbolReferenceAstNode -> resolveSymbolReference(ast)
+            is NotNode -> resolveNot(ast)
+            is OrNode -> resolveOr(ast)
+            is AndNode -> resolveAnd(ast)
+            is ArrowNode -> resolveArrow(ast)
+        }
+    }
+
+    private fun resolveExpressionAssertType(ast: CodeExpressionAstNode, type: Type): ExpressionDescriptor {
+        val resolved = resolveExpression(ast)
+        if (!TypeChecker.areEqual(resolved.type, type)) {
+            throw CompilationException("Expected type ${type.prettyPrint()}, found: ${resolved.type.prettyPrint()}")
+        }
+
+        return resolved
+    }
+
+    private fun resolveNot(ast: NotNode): NotDescriptor {
+        val resolvedChild = resolveExpressionAssertType(ast.child, Type.BooleanType)
+        return NotDescriptor(resolvedChild)
+    }
+
+    private fun resolveOr(ast: OrNode): OrDescriptor {
+        val resolvedLeft = resolveExpressionAssertType(ast.left, Type.BooleanType)
+        val resolvedRight = resolveExpressionAssertType(ast.right, Type.BooleanType)
+        return OrDescriptor(resolvedLeft, resolvedRight)
+    }
+
+    private fun resolveAnd(ast: AndNode): AndDescriptor {
+        val resolvedLeft = resolveExpressionAssertType(ast.left, Type.BooleanType)
+        val resolvedRight = resolveExpressionAssertType(ast.right, Type.BooleanType)
+        return AndDescriptor(resolvedLeft, resolvedRight)
+    }
+
+    private fun resolveArrow(ast: ArrowNode): ArrowDescriptor {
+        val resolvedLeft = resolveExpressionAssertType(ast.left, Type.BooleanType)
+        val resolvedRight = resolveExpressionAssertType(ast.right, Type.BooleanType)
+        return ArrowDescriptor(resolvedLeft, resolvedRight)
+    }
+
+    private fun resolveSymbolReference(ast: SymbolReferenceAstNode): ExpressionDescriptor {
+        if (ast.name == "_")
+            return ProofReturnValueDescriptor(resolutionContext.currentFunctionNotNull.ast.returnType.descriptor.type)
+
         val descriptor = resolutionContext.findDeclaration(ast.name)
             ?: throw CompilationException("Unresolved symbol reference: ${ast.name}")
 
-        if (descriptor !is VariableDescriptor) {
-            throw CompilationException("Expected a reference to a variable, found: ${descriptor.javaClass}")
+        if (descriptor !is ExpressionDescriptor) {
+            throw CompilationException("Expected a reference to an expression, found: ${descriptor.javaClass}")
         }
 
-        return when (descriptor) {
-            is FunctionParameterDescriptor -> CompiledExpression(descriptor.name, descriptor.type)
-            is LocalVariableDescriptor -> CompiledExpression(descriptor.name, descriptor.type)
-        }
+        return descriptor
     }
 
-    private fun compileIntLiteral(ast: IntegerLiteralAstNode): CompiledExpression {
-        return CompiledExpression(ast.value, Type.StrictInteger.Int64)
+    private fun resolveIntLiteral(ast: IntegerLiteralAstNode): IntegerLiteralDescriptor {
+        return IntegerLiteralDescriptor(ast.value, Type.StrictInteger.Int64)
     }
 }

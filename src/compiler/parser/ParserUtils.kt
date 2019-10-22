@@ -22,7 +22,12 @@ private class AstBuildingVisitor : MainParserBaseVisitor<AstNode>() {
     )
 
     override fun visitFunction(ctx: FunctionContext) = FunctionDeclarationAstNode(
-        ctx.name.text, ctx.parameters.map { visitFunctionParameter(it) }, visitType(ctx.returnType), visitCodeBlock(ctx.codeBlock())
+        ctx.name.text,
+        ctx.parameters.map { visitFunctionParameter(it) },
+        ctx.inputContract?.let { visitFunctionContract(it) },
+        visitType(ctx.returnType),
+        ctx.outputContract?.let { visitFunctionContract(it) },
+        visitCodeBlock(ctx.codeBlock())
     )
 
     override fun visitCodeBlock(ctx: CodeBlockContext) = CodeBlockAstNode(ctx.statements.map { visitCodeStatement(it) })
@@ -34,6 +39,32 @@ private class AstBuildingVisitor : MainParserBaseVisitor<AstNode>() {
     override fun visitIntLiteral(ctx: IntLiteralContext) = IntegerLiteralAstNode(ctx.INT().text)
 
     override fun visitSymbolReference(ctx: SymbolReferenceContext) = SymbolReferenceAstNode(ctx.name.text)
+
+    override fun visitFunctionContract(ctx: FunctionContractContext) = FunctionContractAstNode(
+        ctx.expressions.map { visitCodeExpression(it) }
+    )
+
+    override fun visitNegate(ctx: NegateContext) = NotNode(
+        visitCodeExpression(ctx.codeExpression())
+    )
+
+    override fun visitParen(ctx: ParenContext) =
+        visitCodeExpression(ctx.codeExpression())
+
+    override fun visitOr(ctx: OrContext) = OrNode(
+        visitCodeExpression(ctx.left),
+        visitCodeExpression(ctx.right)
+    )
+
+    override fun visitAnd(ctx: AndContext) = AndNode(
+        visitCodeExpression(ctx.left),
+        visitCodeExpression(ctx.right)
+    )
+
+    override fun visitArrow(ctx: ArrowContext) = ArrowNode(
+        visitCodeExpression(ctx.left),
+        visitCodeExpression(ctx.right)
+    )
 
     fun visitCodeStatement(tree: ParseTree) = visit(tree) as CodeStatementAstNode
     fun visitCodeExpression(tree: ParseTree) = visit(tree) as CodeExpressionAstNode
