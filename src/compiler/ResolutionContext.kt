@@ -25,8 +25,8 @@ class ResolutionContext {
         currentFunction = descriptor
         return try {
             withLayer {
-                descriptor.ast.parameters.forEach { parameter ->
-                    addDeclaration(parameter.name, parameter.descriptor)
+                descriptor.parameters.forEach { parameter ->
+                    addDeclaration(parameter.name, parameter)
                 }
 
                 block()
