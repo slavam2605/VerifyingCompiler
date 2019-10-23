@@ -26,6 +26,14 @@ interface ProofExpressionOnly
 
 sealed class ExpressionDescriptor : ResolvedDescriptor(), TypedDescriptor
 
+class InvocationDescriptor(
+    val functionDescriptor: FunctionDescriptor,
+    val arguments: List<ExpressionDescriptor>
+) : ExpressionDescriptor() {
+    override val type: Type
+        get() = functionDescriptor.ast.returnType.descriptor.type
+}
+
 class FunctionParameterDescriptor(val name: String, override val type: Type) : ExpressionDescriptor()
 
 class LocalVariableDescriptor(val name: String, override val type: Type) : ExpressionDescriptor()

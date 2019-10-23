@@ -38,10 +38,14 @@ private class AstBuildingVisitor : MainParserBaseVisitor<AstNode>() {
 
     override fun visitIntLiteral(ctx: IntLiteralContext) = IntegerLiteralAstNode(ctx.INT().text)
 
+    override fun visitInvocation(ctx: InvocationContext) = InvocationAstNode(
+        ctx.name.text, ctx.expressionList().expressions.map { visitCodeExpression(it) }
+    )
+
     override fun visitSymbolReference(ctx: SymbolReferenceContext) = SymbolReferenceAstNode(ctx.name.text)
 
     override fun visitFunctionContract(ctx: FunctionContractContext) = FunctionContractAstNode(
-        ctx.expressions.map { visitCodeExpression(it) }
+        ctx.expressionList().expressions.map { visitCodeExpression(it) }
     )
 
     override fun visitNegate(ctx: NegateContext) = NotNode(

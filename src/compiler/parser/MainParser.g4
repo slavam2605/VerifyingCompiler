@@ -25,8 +25,13 @@ codeStatement
     :   'var' name=IDENT ':' type ('=' codeExpression)?     #varDeclaration
     ;
 
+expressionList
+    :   (expressions += codeExpression (',' expressions += codeExpression)*)?
+    ;
+
 codeExpression
     :   INT                                                 #intLiteral
+    |   name=IDENT '(' expressionList ')'                   #invocation
     |   name=IDENT                                          #symbolReference
     |   '!' codeExpression                                  #negate
     |   '(' codeExpression ')'                              #paren
@@ -36,5 +41,5 @@ codeExpression
     ;
 
 functionContract
-    :   '[' (expressions += codeExpression (',' expressions += codeExpression)*)? ']'
+    :   '[' expressionList ']'
     ;

@@ -82,9 +82,13 @@ class CppCompiler {
             is LocalVariableDescriptor -> expression.name
             is IntegerLiteralDescriptor -> expression.value
             is NotDescriptor -> "!(${compileExpression(expression.child)})"
-            is OrDescriptor -> "(${compileExpression(expression.left)}) | (${compileExpression(expression.right)})"
-            is AndDescriptor -> "(${compileExpression(expression.left)}) & (${compileExpression(expression.right)})"
-            is ArrowDescriptor -> "!(${compileExpression(expression.left)}) | (${compileExpression(expression.right)})"
+            is OrDescriptor -> "(${compileExpression(expression.left)}) || (${compileExpression(expression.right)})"
+            is AndDescriptor -> "(${compileExpression(expression.left)}) && (${compileExpression(expression.right)})"
+            is ArrowDescriptor -> "!(${compileExpression(expression.left)}) || (${compileExpression(expression.right)})"
+            is InvocationDescriptor -> {
+                val compilerArguments = expression.arguments.map { compileExpression(it) }
+                "${expression.functionDescriptor.name}(${compilerArguments.joinToString()})"
+            }
 
             // proof only expression
             is ProofReturnValueDescriptor -> error("")
@@ -96,6 +100,7 @@ class CppCompiler {
     private fun resolveExpression(ast: CodeExpressionAstNode): ExpressionDescriptor {
         return when (ast) {
             is IntegerLiteralAstNode -> resolveIntLiteral(ast)
+            is InvocationAstNode -> resolveInvocation(ast)
             is SymbolReferenceAstNode -> resolveSymbolReference(ast)
             is NotNode -> resolveNot(ast)
             is OrNode -> resolveOr(ast)
@@ -111,6 +116,20 @@ class CppCompiler {
         }
 
         return resolved
+    }
+
+    private fun resolveInvocation(ast: InvocationAstNode): InvocationDescriptor {
+        val functionDescriptor = resolutionContext.findDeclaration(ast.name)
+            ?: throw CompilationException("Unresolved symbol reference: ${ast.name}")
+
+        if (functionDescriptor !is FunctionDescriptor) {
+            throw CompilationException("Expected a callable reference, found: ${functionDescriptor.javaClass}")
+        }
+
+        val resolvedArguments = ast.arguments.mapIndexed { index, node ->
+            resolveExpressionAssertType(node, functionDescriptor.ast.parameters[index].type.descriptor.type)
+        }
+        return InvocationDescriptor(functionDescriptor, resolvedArguments)
     }
 
     private fun resolveNot(ast: NotNode): NotDescriptor {
