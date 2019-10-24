@@ -23,6 +23,7 @@ codeBlock
 
 codeStatement
     :   'var' name=IDENT ':' type ('=' codeExpression)?     #varDeclaration
+    |   '+>' codeExpression                                 #proofElement
     ;
 
 expressionList
@@ -30,14 +31,14 @@ expressionList
     ;
 
 codeExpression
-    :   INT                                                 #intLiteral
-    |   name=IDENT '(' expressionList ')'                   #invocation
-    |   name=IDENT                                          #symbolReference
-    |   '!' codeExpression                                  #negate
-    |   '(' codeExpression ')'                              #paren
-    |   left=codeExpression '&' right=codeExpression        #and
-    |   left=codeExpression '|' right=codeExpression        #or
-    |   left=codeExpression '->' right=codeExpression       #arrow
+    :   INT                                                             #intLiteral
+    |   name=IDENT '(' expressionList ')'                               #invocation
+    |   name=IDENT                                                      #symbolReference
+    |   '!' codeExpression                                              #negate
+    |   '(' codeExpression ')'                                          #paren
+    |   left=codeExpression '&' right=codeExpression                    #and
+    |   left=codeExpression '|' right=codeExpression                    #or
+    |   <assoc=right> left=codeExpression '->' right=codeExpression     #arrow
     ;
 
 functionContract

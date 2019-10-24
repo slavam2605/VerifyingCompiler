@@ -8,7 +8,8 @@ sealed class ResolvedExpression {
 
 class ResolvedInvocation(
     val functionDescriptor: FunctionDescriptor,
-    val arguments: List<ResolvedExpression>
+    val arguments: List<ResolvedExpression>,
+    val inputContract: List<ResolvedExpression>
 ) : ResolvedExpression() {
     override val type: Type
         get() = functionDescriptor.returnType

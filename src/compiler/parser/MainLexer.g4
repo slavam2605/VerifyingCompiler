@@ -14,6 +14,7 @@ EXCL:           '!';
 AND:            '&';
 OR:             '|';
 ARROW:          '->';
+APPEND_ARROW:   '+>';
 
 FUN_KW:         'fun';
 VAR_KW:         'var';

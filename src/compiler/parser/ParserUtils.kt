@@ -36,6 +36,10 @@ private class AstBuildingVisitor : MainParserBaseVisitor<AstNode>() {
         ctx.name.text, visitType(ctx.type()), ctx.codeExpression()?.let { visitCodeExpression(it) }
     )
 
+    override fun visitProofElement(ctx: ProofElementContext) = ProofElementAstNode(
+        visitCodeExpression(ctx.codeExpression())
+    )
+
     override fun visitIntLiteral(ctx: IntLiteralContext) = IntegerLiteralAstNode(ctx.INT().text)
 
     override fun visitInvocation(ctx: InvocationContext) = InvocationAstNode(

@@ -5,6 +5,7 @@ import compiler.resolved.*
 import compiler.types.Type
 import compiler.types.TypeChecker
 import compiler.types.prettyPrint
+import compiler.verification.verify
 import utils.exhaustive
 
 class CppCompiler {
@@ -59,7 +60,17 @@ class CppCompiler {
     private fun compileStatement(ast: CodeStatementAstNode, provedContext: ProvedContext) {
         when (ast) {
             is VarDeclarationAstNode -> compileVarDeclaration(ast, provedContext)
+            is ProofElementAstNode -> compileProofElement(ast, provedContext)
         }.exhaustive
+    }
+
+    private fun compileProofElement(ast: ProofElementAstNode, provedContext: ProvedContext) {
+        val resolvedExpression = resolveExpressionAssertType(ast.expression, Type.BooleanType)
+        if (!resolvedExpression.verify(provedContext)) {
+            throw CompilationException("Proof element couldn't be verified")
+        }
+
+        provedContext.addExpression(resolvedExpression)
     }
 
     private fun compileVarDeclaration(ast: VarDeclarationAstNode, provedContext: ProvedContext) {
@@ -107,6 +118,11 @@ class CppCompiler {
             }
             is ResolvedInvocation -> {
                 val compilerArguments = expression.arguments.map { compileExpression(it, provedContext) }
+                expression.inputContract.forEach {
+                    if (!provedContext.contains(it)) {
+                        throw CompilationException("Expression was not proved: ${it.prettyPrint()}")
+                    }
+                }
                 "${expression.functionDescriptor.name}(${compilerArguments.joinToString()})"
             }
         }
@@ -146,7 +162,21 @@ class CppCompiler {
         val resolvedArguments = ast.arguments.mapIndexed { index, node ->
             resolveExpressionAssertType(node, functionDescriptor.parameters[index].type)
         }
-        return ResolvedInvocation(functionDescriptor, resolvedArguments)
+
+        val resolvedInputContract = functionDescriptor.inputContract.map { it.substitute { expr ->
+            if (expr !is ResolvedSymbolReference)
+                return@substitute null
+
+            functionDescriptor.parameters.forEachIndexed { index, param ->
+                if (expr.descriptor == param) { // TODO correct comparison of descriptors
+                    return@substitute resolvedArguments[index]
+                }
+            }
+
+            null
+        } }
+
+        return ResolvedInvocation(functionDescriptor, resolvedArguments, resolvedInputContract)
     }
 
     private fun resolveNot(ast: NotNode): ResolvedNot {

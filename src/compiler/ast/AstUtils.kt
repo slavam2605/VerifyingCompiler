@@ -45,6 +45,8 @@ class VarDeclarationAstNode(
     }
 }
 
+class ProofElementAstNode(val expression: CodeExpressionAstNode) : CodeStatementAstNode()
+
 sealed class CodeExpressionAstNode : AstNode()
 
 class IntegerLiteralAstNode(val value: String) : CodeExpressionAstNode()
