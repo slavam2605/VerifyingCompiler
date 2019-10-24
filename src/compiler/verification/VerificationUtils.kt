@@ -1,10 +1,15 @@
 package compiler.verification
 
 import compiler.ProvedContext
+import compiler.evaluation.BooleanValue
+import compiler.evaluation.evaluate
 import compiler.resolved.*
 import compiler.types.Type
 
 fun ResolvedExpression.verify(context: ProvedContext): Boolean {
+    if (checkByEvaluation(this))
+        return true
+
     if (checkByAxiom(this))
         return true
 
@@ -15,6 +20,14 @@ fun ResolvedExpression.verify(context: ProvedContext): Boolean {
         return true
 
     return false
+}
+
+private fun checkByEvaluation(expression: ResolvedExpression): Boolean {
+    val value = expression.evaluate()
+        ?: return false
+
+    check(value is BooleanValue)
+    return value.value
 }
 
 private fun checkByContext(expression: ResolvedExpression, context: ProvedContext): Boolean {
@@ -57,4 +70,18 @@ private val or3 = ResolvedArrow(ResolvedArrow(a, c), ResolvedArrow(ResolvedArrow
 private val not1 = ResolvedArrow(ResolvedArrow(a, b), ResolvedArrow(ResolvedArrow(a, ResolvedNot(b)), ResolvedNot(a)))
 private val not2 = ResolvedArrow(ResolvedNot(ResolvedNot(a)), a)
 
-private val axiomList = listOf(arrow1, arrow2, and1, and2, and3, or1, or2, or3, not1, not2)
+private val logicAxiomList = listOf(arrow1, arrow2, and1, and2, and3, or1, or2, or3, not1, not2)
+
+private val x = ResolvedSymbolReference(LocalVariableDescriptor("x", Type.StrictInteger.Int64))
+private val y = ResolvedSymbolReference(LocalVariableDescriptor("y", Type.StrictInteger.Int64))
+private val z = ResolvedSymbolReference(LocalVariableDescriptor("z", Type.StrictInteger.Int64))
+
+private val eq1 = ResolvedComparison("==", x, x)
+private val eq2 = ResolvedArrow(ResolvedComparison("==", x, y), ResolvedComparison("==", y, x))
+private val eq3 = ResolvedArrow(ResolvedComparison("==", x, y), ResolvedArrow(ResolvedComparison("==", y, z), ResolvedComparison("==", x, z)))
+private val neq1 = ResolvedArrow(ResolvedComparison("!=", x, y), ResolvedNot(ResolvedComparison("==", x, y)))
+private val neq2 = ResolvedArrow(ResolvedNot(ResolvedComparison("==", x, y)), ResolvedComparison("!=", x, y))
+
+private val strictNumericAxiomList = listOf(eq1, eq2, eq3, neq1, neq2)
+
+private val axiomList = logicAxiomList + strictNumericAxiomList

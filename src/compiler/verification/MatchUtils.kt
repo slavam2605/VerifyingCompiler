@@ -21,6 +21,7 @@ fun ResolvedExpression.match(pattern: ResolvedExpression): Boolean {
                     && expression.functionDescriptor == pattern.functionDescriptor // TODO correct comparison of descriptors
                     && expression.arguments.zip(pattern.arguments).all { internalMatch(it.first, it.second) }
             is ResolvedIntegerLiteral -> expression is ResolvedIntegerLiteral && expression.value == pattern.value
+            is ResolvedComparison -> expression is ResolvedComparison && expression.op == pattern.op && internalMatch(expression.left, pattern.left) && internalMatch(expression.right, pattern.right)
             is ResolvedNot -> expression is ResolvedNot && internalMatch(expression.child, pattern.child)
             is ResolvedOr -> expression is ResolvedOr && internalMatch(expression.left, pattern.left) && internalMatch(expression.right, pattern.right)
             is ResolvedAnd -> expression is ResolvedAnd && internalMatch(expression.left, pattern.left) && internalMatch(expression.right, pattern.right)

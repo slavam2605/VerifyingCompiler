@@ -67,7 +67,7 @@ class CppCompiler {
     private fun compileProofElement(ast: ProofElementAstNode, provedContext: ProvedContext) {
         val resolvedExpression = resolveExpressionAssertType(ast.expression, Type.BooleanType)
         if (!resolvedExpression.verify(provedContext)) {
-            throw CompilationException("Proof element couldn't be verified")
+            throw CompilationException("Proof element couldn't be verified: ${resolvedExpression.prettyPrint()}")
         }
 
         provedContext.addExpression(resolvedExpression)
@@ -100,6 +100,11 @@ class CppCompiler {
                 is ProofReturnValueDescriptor -> throw CompilationException("ProofReturnValueDescriptor can't be compiled")
             }
             is ResolvedIntegerLiteral -> expression.value
+            is ResolvedComparison -> {
+                val left = compileExpression(expression.left, provedContext)
+                val right = compileExpression(expression.right, provedContext)
+                "($left) ${expression.op} ($right)"
+            }
             is ResolvedNot -> "!(${compileExpression(expression.child, provedContext)})"
             is ResolvedOr -> {
                 val left = compileExpression(expression.left, provedContext)
@@ -135,6 +140,7 @@ class CppCompiler {
             is IntegerLiteralAstNode -> resolveIntLiteral(ast)
             is InvocationAstNode -> resolveInvocation(ast)
             is SymbolReferenceAstNode -> resolveSymbolReference(ast)
+            is ComparisonNode -> resolveComparison(ast)
             is NotNode -> resolveNot(ast)
             is OrNode -> resolveOr(ast)
             is AndNode -> resolveAnd(ast)
@@ -149,6 +155,12 @@ class CppCompiler {
         }
 
         return resolved
+    }
+
+    private fun resolveComparison(ast: ComparisonNode): ResolvedComparison {
+        val resolvedLeft = resolveExpressionAssertType(ast.left, Type.StrictInteger.Int64)
+        val resolvedRight = resolveExpressionAssertType(ast.right, Type.StrictInteger.Int64)
+        return ResolvedComparison(ast.op, resolvedLeft, resolvedRight)
     }
 
     private fun resolveInvocation(ast: InvocationAstNode): ResolvedInvocation {

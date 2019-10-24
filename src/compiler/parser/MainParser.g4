@@ -31,14 +31,15 @@ expressionList
     ;
 
 codeExpression
-    :   INT                                                             #intLiteral
-    |   name=IDENT '(' expressionList ')'                               #invocation
-    |   name=IDENT                                                      #symbolReference
-    |   '!' codeExpression                                              #negate
-    |   '(' codeExpression ')'                                          #paren
-    |   left=codeExpression '&' right=codeExpression                    #and
-    |   left=codeExpression '|' right=codeExpression                    #or
-    |   <assoc=right> left=codeExpression '->' right=codeExpression     #arrow
+    :   INT                                                                         #intLiteral
+    |   name=IDENT '(' expressionList ')'                                           #invocation
+    |   name=IDENT                                                                  #symbolReference
+    |   '!' codeExpression                                                          #negate
+    |   '(' codeExpression ')'                                                      #paren
+    |   left=codeExpression op=('<'|'>'|'<='|'>='|'=='|'!=') right=codeExpression   #comparison
+    |   left=codeExpression '&' right=codeExpression                                #and
+    |   left=codeExpression '|' right=codeExpression                                #or
+    |   <assoc=right> left=codeExpression '->' right=codeExpression                 #arrow
     ;
 
 functionContract

@@ -22,6 +22,11 @@ class ResolvedSymbolReference(val descriptor: TypedDescriptor) : ResolvedExpress
 
 class ResolvedIntegerLiteral(val value: String, override val type: Type) : ResolvedExpression()
 
+class ResolvedComparison(val op: String, val left: ResolvedExpression, val right: ResolvedExpression) : ResolvedExpression() {
+    override val type: Type
+        get() = Type.BooleanType
+}
+
 class ResolvedNot(val child: ResolvedExpression) : ResolvedExpression() {
     override val type: Type
         get() = Type.BooleanType

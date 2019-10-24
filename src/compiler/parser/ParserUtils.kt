@@ -59,6 +59,12 @@ private class AstBuildingVisitor : MainParserBaseVisitor<AstNode>() {
     override fun visitParen(ctx: ParenContext) =
         visitCodeExpression(ctx.codeExpression())
 
+    override fun visitComparison(ctx: ComparisonContext) = ComparisonNode(
+        ctx.op.text,
+        visitCodeExpression(ctx.left),
+        visitCodeExpression(ctx.right)
+    )
+
     override fun visitOr(ctx: OrContext) = OrNode(
         visitCodeExpression(ctx.left),
         visitCodeExpression(ctx.right)

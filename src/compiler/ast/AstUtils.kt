@@ -55,6 +55,8 @@ class InvocationAstNode(val name: String, val arguments: List<CodeExpressionAstN
 
 class SymbolReferenceAstNode(val name: String) : CodeExpressionAstNode()
 
+class ComparisonNode(val op: String, val left: CodeExpressionAstNode, val right: CodeExpressionAstNode) : CodeExpressionAstNode()
+
 class NotNode(val child: CodeExpressionAstNode) : CodeExpressionAstNode()
 
 class OrNode(val left: CodeExpressionAstNode, val right: CodeExpressionAstNode) : CodeExpressionAstNode()
