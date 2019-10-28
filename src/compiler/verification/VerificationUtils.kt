@@ -36,14 +36,22 @@ private fun checkByContext(expression: ResolvedExpression, context: ProvedContex
 
 private fun checkByModusPonens(expression: ResolvedExpression, context: ProvedContext): Boolean {
     context.forEach { implication ->
-        if (implication !is ResolvedArrow || !implication.right.deepEquals(expression))
-            return@forEach
-
-        if (context.contains(implication.left))
+        if (internalCheckByModusPonens(implication, expression, context))
             return true
     }
 
     return false
+}
+
+private fun internalCheckByModusPonens(implication: ResolvedExpression, expression: ResolvedExpression, context: ProvedContext): Boolean {
+    if (implication !is ResolvedArrow)
+        return false
+
+    if (!implication.right.deepEquals(expression))
+        if (!internalCheckByModusPonens(implication.right, expression, context))
+            return false
+
+    return implication.left.verify(context)
 }
 
 private fun checkByAxiom(expression: ResolvedExpression): Boolean {

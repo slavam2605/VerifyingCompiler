@@ -136,7 +136,7 @@ class CppCompiler {
             is ResolvedInvocation -> {
                 val compilerArguments = expression.arguments.map { compileExpression(it, provedContext) }
                 expression.inputContract.forEach {
-                    if (!provedContext.contains(it)) {
+                    if (!it.verify(provedContext)) {
                         throw CompilationException("Expression was not proved: ${it.prettyPrint()}")
                     }
                 }
