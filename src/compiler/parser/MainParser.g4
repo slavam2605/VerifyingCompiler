@@ -37,6 +37,8 @@ codeExpression
     |   name=IDENT                                                                  #symbolReference
     |   '!' codeExpression                                                          #negate
     |   '(' codeExpression ')'                                                      #paren
+    |   left=codeExpression op=('*'|'/') right=codeExpression                       #mulDiv
+    |   left=codeExpression op=('+'|'-') right=codeExpression                       #plusMinus
     |   left=codeExpression op=('<'|'>'|'<='|'>='|'=='|'!=') right=codeExpression   #comparison
     |   left=codeExpression '&' right=codeExpression                                #and
     |   left=codeExpression '|' right=codeExpression                                #or

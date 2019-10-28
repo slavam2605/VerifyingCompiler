@@ -101,25 +101,36 @@ class CppCompiler {
             }
             is ResolvedIntegerLiteral -> expression.value
             is ResolvedBooleanLiteral -> expression.value.toString()
-            is ResolvedComparison -> {
-                val left = compileExpression(expression.left, provedContext)
-                val right = compileExpression(expression.right, provedContext)
+            is ResolvedComparison -> compileBinaryExpression(
+                expression.left,
+                expression.right,
+                provedContext
+            ) { left, right ->
                 "($left) ${expression.op} ($right)"
             }
             is ResolvedNot -> "!(${compileExpression(expression.child, provedContext)})"
-            is ResolvedOr -> {
-                val left = compileExpression(expression.left, provedContext)
-                val right = compileExpression(expression.right, provedContext.createNested(ResolvedNot(expression.left)))
+            is ResolvedOr -> compileBinaryExpression(
+                expression.left,
+                expression.right,
+                provedContext,
+                { it.createNested(ResolvedNot(expression.left)) }
+            ) { left, right ->
                 "($left) || ($right)"
             }
-            is ResolvedAnd -> {
-                val left = compileExpression(expression.left, provedContext)
-                val right = compileExpression(expression.right, provedContext.createNested(expression.left))
+            is ResolvedAnd -> compileBinaryExpression(
+                expression.left,
+                expression.right,
+                provedContext,
+                { it.createNested(expression.left) }
+            ) { left, right ->
                 "($left) && ($right)"
             }
-            is ResolvedArrow -> {
-                val left = compileExpression(expression.left, provedContext)
-                val right = compileExpression(expression.right, provedContext.createNested(expression.left))
+            is ResolvedArrow -> compileBinaryExpression(
+                expression.left,
+                expression.right,
+                provedContext,
+                { it.createNested(expression.left) }
+            ) { left, right ->
                 "!($left) || ($right)"
             }
             is ResolvedInvocation -> {
@@ -131,7 +142,47 @@ class CppCompiler {
                 }
                 "${expression.functionDescriptor.name}(${compilerArguments.joinToString()})"
             }
+            is ResolvedMultiplication -> compileBinaryExpression(
+                expression.left,
+                expression.right,
+                provedContext
+            ) { left, right ->
+                "($left) * ($right)"
+            }
+            is ResolvedDivision -> compileBinaryExpression(
+                expression.left,
+                expression.right,
+                provedContext
+            ) { left, right ->
+                "($left) / ($right)"
+            }
+            is ResolvedAddition -> compileBinaryExpression(
+                expression.left,
+                expression.right,
+                provedContext
+            ) { left, right ->
+                "($left) + ($right)"
+            }
+            is ResolvedSubtraction -> compileBinaryExpression(
+                expression.left,
+                expression.right,
+                provedContext
+            ) { left, right ->
+                "($left) - ($right)"
+            }
         }
+    }
+
+    private fun compileBinaryExpression(
+        left: ResolvedExpression,
+        right: ResolvedExpression,
+        provedContext: ProvedContext,
+        pcTransform: (ProvedContext) -> ProvedContext = { it },
+        result: (String, String) -> String
+    ): String {
+        val compiledLeft = compileExpression(left, provedContext)
+        val compiledRight = compileExpression(right, pcTransform(provedContext))
+        return result(compiledLeft, compiledRight)
     }
 
     /* ============================== expression resolution ============================== */
@@ -142,11 +193,15 @@ class CppCompiler {
             is BooleanLiteralAstNode -> ResolvedBooleanLiteral(ast.value)
             is InvocationAstNode -> resolveInvocation(ast)
             is SymbolReferenceAstNode -> resolveSymbolReference(ast)
-            is ComparisonNode -> resolveComparison(ast)
+            is ComparisonNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedComparison(ast.op, left, right) }
             is NotNode -> resolveNot(ast)
-            is OrNode -> resolveOr(ast)
-            is AndNode -> resolveAnd(ast)
-            is ArrowNode -> resolveArrow(ast)
+            is OrNode -> resolveBinaryOperation(ast.left, ast.right, Type.BooleanType, Type.BooleanType) { left, right -> ResolvedOr(left, right) }
+            is AndNode -> resolveBinaryOperation(ast.left, ast.right, Type.BooleanType, Type.BooleanType) { left, right -> ResolvedOr(left, right) }
+            is ArrowNode -> resolveBinaryOperation(ast.left, ast.right, Type.BooleanType, Type.BooleanType) { left, right -> ResolvedOr(left, right) }
+            is MultiplicationAstNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedMultiplication(left, right) }
+            is DivisionAstNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedDivision(left, right) }
+            is AdditionAstNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedAddition(left, right) }
+            is SubtractionAstNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedSubtraction(left, right) }
         }
     }
 
@@ -159,10 +214,16 @@ class CppCompiler {
         return resolved
     }
 
-    private fun resolveComparison(ast: ComparisonNode): ResolvedComparison {
-        val resolvedLeft = resolveExpressionAssertType(ast.left, Type.StrictInteger.Int64)
-        val resolvedRight = resolveExpressionAssertType(ast.right, Type.StrictInteger.Int64)
-        return ResolvedComparison(ast.op, resolvedLeft, resolvedRight)
+    private fun <T: ResolvedExpression> resolveBinaryOperation(
+        left: CodeExpressionAstNode,
+        right: CodeExpressionAstNode,
+        leftType: Type,
+        rightType: Type,
+        constructor: (ResolvedExpression, ResolvedExpression) -> T
+    ): T {
+        val resolvedLeft = resolveExpressionAssertType(left, leftType)
+        val resolvedRight = resolveExpressionAssertType(right, rightType)
+        return constructor(resolvedLeft, resolvedRight)
     }
 
     private fun resolveInvocation(ast: InvocationAstNode): ResolvedInvocation {
@@ -196,24 +257,6 @@ class CppCompiler {
     private fun resolveNot(ast: NotNode): ResolvedNot {
         val resolvedChild = resolveExpressionAssertType(ast.child, Type.BooleanType)
         return ResolvedNot(resolvedChild)
-    }
-
-    private fun resolveOr(ast: OrNode): ResolvedOr {
-        val resolvedLeft = resolveExpressionAssertType(ast.left, Type.BooleanType)
-        val resolvedRight = resolveExpressionAssertType(ast.right, Type.BooleanType)
-        return ResolvedOr(resolvedLeft, resolvedRight)
-    }
-
-    private fun resolveAnd(ast: AndNode): ResolvedAnd {
-        val resolvedLeft = resolveExpressionAssertType(ast.left, Type.BooleanType)
-        val resolvedRight = resolveExpressionAssertType(ast.right, Type.BooleanType)
-        return ResolvedAnd(resolvedLeft, resolvedRight)
-    }
-
-    private fun resolveArrow(ast: ArrowNode): ResolvedArrow {
-        val resolvedLeft = resolveExpressionAssertType(ast.left, Type.BooleanType)
-        val resolvedRight = resolveExpressionAssertType(ast.right, Type.BooleanType)
-        return ResolvedArrow(resolvedLeft, resolvedRight)
     }
 
     private fun resolveSymbolReference(ast: SymbolReferenceAstNode): ResolvedSymbolReference {

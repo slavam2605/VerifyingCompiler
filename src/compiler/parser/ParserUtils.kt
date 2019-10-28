@@ -61,6 +61,22 @@ private class AstBuildingVisitor : MainParserBaseVisitor<AstNode>() {
     override fun visitParen(ctx: ParenContext) =
         visitCodeExpression(ctx.codeExpression())
 
+    override fun visitPlusMinus(ctx: PlusMinusContext): CodeExpressionAstNode {
+        return when (ctx.op.text) {
+            "+" -> AdditionAstNode(visitCodeExpression(ctx.left), visitCodeExpression(ctx.right))
+            "-" -> SubtractionAstNode(visitCodeExpression(ctx.left), visitCodeExpression(ctx.right))
+            else -> error("")
+        }
+    }
+
+    override fun visitMulDiv(ctx: MulDivContext): CodeExpressionAstNode {
+        return when (ctx.op.text) {
+            "*" -> MultiplicationAstNode(visitCodeExpression(ctx.left), visitCodeExpression(ctx.right))
+            "/" -> DivisionAstNode(visitCodeExpression(ctx.left), visitCodeExpression(ctx.right))
+            else -> error("")
+        }
+    }
+
     override fun visitComparison(ctx: ComparisonContext) = ComparisonNode(
         ctx.op.text,
         visitCodeExpression(ctx.left),

@@ -27,6 +27,10 @@ fun ResolvedExpression.match(pattern: ResolvedExpression): Boolean {
             is ResolvedOr -> expression is ResolvedOr && internalMatch(expression.left, pattern.left) && internalMatch(expression.right, pattern.right)
             is ResolvedAnd -> expression is ResolvedAnd && internalMatch(expression.left, pattern.left) && internalMatch(expression.right, pattern.right)
             is ResolvedArrow -> expression is ResolvedArrow && internalMatch(expression.left, pattern.left) && internalMatch(expression.right, pattern.right)
+            is ResolvedMultiplication -> expression is ResolvedMultiplication && internalMatch(expression.left, pattern.left) && internalMatch(expression.left, expression.right)
+            is ResolvedDivision -> expression is ResolvedDivision && internalMatch(expression.left, pattern.left) && internalMatch(expression.left, expression.right)
+            is ResolvedAddition -> expression is ResolvedAddition && internalMatch(expression.left, pattern.left) && internalMatch(expression.left, expression.right)
+            is ResolvedSubtraction -> expression is ResolvedSubtraction && internalMatch(expression.left, pattern.left) && internalMatch(expression.left, expression.right)
         }
     }
 

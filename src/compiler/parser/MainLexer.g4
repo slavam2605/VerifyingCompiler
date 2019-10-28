@@ -19,6 +19,10 @@ COMMA:          ',';
 EXCL:           '!';
 AND:            '&';
 OR:             '|';
+STAR:           '*';
+SLASH:          '/';
+PLUS:           '+';
+MINUS:          '-';
 ARROW:          '->';
 APPEND_ARROW:   '+>';
 

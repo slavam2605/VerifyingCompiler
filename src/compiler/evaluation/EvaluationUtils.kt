@@ -13,6 +13,34 @@ fun ResolvedExpression.evaluate(): Value? = when (this) {
     is ResolvedOr -> evaluateOr(this)
     is ResolvedAnd -> evaluateAnd(this)
     is ResolvedArrow -> evaluateArrow(this)
+    is ResolvedMultiplication -> evaluateMultiplication(this)
+    is ResolvedDivision -> evaluateDivision(this)
+    is ResolvedAddition -> evaluateAddition(this)
+    is ResolvedSubtraction -> evaluateSubtraction(this)
+}
+
+private fun evaluateMultiplication(expression: ResolvedMultiplication): Value? {
+    val left = (expression.left.evaluate() ?: return null) as StrictInt64Value
+    val right = (expression.right.evaluate() ?: return null) as StrictInt64Value
+    return left.mul(right)
+}
+
+private fun evaluateDivision(expression: ResolvedDivision): Value? {
+    val left = (expression.left.evaluate() ?: return null) as StrictInt64Value
+    val right = (expression.right.evaluate() ?: return null) as StrictInt64Value
+    return left.div(right)
+}
+
+private fun evaluateAddition(expression: ResolvedAddition): Value? {
+    val left = (expression.left.evaluate() ?: return null) as StrictInt64Value
+    val right = (expression.right.evaluate() ?: return null) as StrictInt64Value
+    return left.add(right)
+}
+
+private fun evaluateSubtraction(expression: ResolvedSubtraction): Value? {
+    val left = (expression.left.evaluate() ?: return null) as StrictInt64Value
+    val right = (expression.right.evaluate() ?: return null) as StrictInt64Value
+    return left.sub(right)
 }
 
 private fun evaluateNot(expression: ResolvedNot): Value? {

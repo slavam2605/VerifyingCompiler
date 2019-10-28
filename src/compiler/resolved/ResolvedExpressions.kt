@@ -27,6 +27,26 @@ class ResolvedBooleanLiteral(val value: Boolean) : ResolvedExpression() {
         get() = Type.BooleanType
 }
 
+class ResolvedMultiplication(val left: ResolvedExpression, val right: ResolvedExpression) : ResolvedExpression() {
+    override val type: Type
+        get() = Type.StrictInteger.Int64
+}
+
+class ResolvedDivision(val left: ResolvedExpression, val right: ResolvedExpression) : ResolvedExpression() {
+    override val type: Type
+        get() = Type.StrictInteger.Int64
+}
+
+class ResolvedAddition(val left: ResolvedExpression, val right: ResolvedExpression) : ResolvedExpression() {
+    override val type: Type
+        get() = Type.StrictInteger.Int64
+}
+
+class ResolvedSubtraction(val left: ResolvedExpression, val right: ResolvedExpression) : ResolvedExpression() {
+    override val type: Type
+        get() = Type.StrictInteger.Int64
+}
+
 class ResolvedComparison(val op: String, val left: ResolvedExpression, val right: ResolvedExpression) : ResolvedExpression() {
     override val type: Type
         get() = Type.BooleanType
