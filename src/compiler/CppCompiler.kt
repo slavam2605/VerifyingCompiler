@@ -196,8 +196,8 @@ class CppCompiler {
             is ComparisonNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedComparison(ast.op, left, right) }
             is NotNode -> resolveNot(ast)
             is OrNode -> resolveBinaryOperation(ast.left, ast.right, Type.BooleanType, Type.BooleanType) { left, right -> ResolvedOr(left, right) }
-            is AndNode -> resolveBinaryOperation(ast.left, ast.right, Type.BooleanType, Type.BooleanType) { left, right -> ResolvedOr(left, right) }
-            is ArrowNode -> resolveBinaryOperation(ast.left, ast.right, Type.BooleanType, Type.BooleanType) { left, right -> ResolvedOr(left, right) }
+            is AndNode -> resolveBinaryOperation(ast.left, ast.right, Type.BooleanType, Type.BooleanType) { left, right -> ResolvedAnd(left, right) }
+            is ArrowNode -> resolveBinaryOperation(ast.left, ast.right, Type.BooleanType, Type.BooleanType) { left, right -> ResolvedArrow(left, right) }
             is MultiplicationAstNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedMultiplication(left, right) }
             is DivisionAstNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedDivision(left, right) }
             is AdditionAstNode -> resolveBinaryOperation(ast.left, ast.right, Type.StrictInteger.Int64, Type.StrictInteger.Int64) { left, right -> ResolvedAddition(left, right) }
