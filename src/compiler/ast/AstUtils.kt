@@ -51,6 +51,8 @@ sealed class CodeExpressionAstNode : AstNode()
 
 class IntegerLiteralAstNode(val value: String) : CodeExpressionAstNode()
 
+class BooleanLiteralAstNode(val value: Boolean) : CodeExpressionAstNode()
+
 class InvocationAstNode(val name: String, val arguments: List<CodeExpressionAstNode>) : CodeExpressionAstNode()
 
 class SymbolReferenceAstNode(val name: String) : CodeExpressionAstNode()

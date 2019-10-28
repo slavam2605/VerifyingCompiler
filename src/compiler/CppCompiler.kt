@@ -100,6 +100,7 @@ class CppCompiler {
                 is ProofReturnValueDescriptor -> throw CompilationException("ProofReturnValueDescriptor can't be compiled")
             }
             is ResolvedIntegerLiteral -> expression.value
+            is ResolvedBooleanLiteral -> expression.value.toString()
             is ResolvedComparison -> {
                 val left = compileExpression(expression.left, provedContext)
                 val right = compileExpression(expression.right, provedContext)
@@ -138,6 +139,7 @@ class CppCompiler {
     private fun resolveExpression(ast: CodeExpressionAstNode): ResolvedExpression {
         return when (ast) {
             is IntegerLiteralAstNode -> resolveIntLiteral(ast)
+            is BooleanLiteralAstNode -> ResolvedBooleanLiteral(ast.value)
             is InvocationAstNode -> resolveInvocation(ast)
             is SymbolReferenceAstNode -> resolveSymbolReference(ast)
             is ComparisonNode -> resolveComparison(ast)

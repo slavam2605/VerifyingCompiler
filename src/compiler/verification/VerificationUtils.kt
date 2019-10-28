@@ -81,7 +81,29 @@ private val eq2 = ResolvedArrow(ResolvedComparison("==", x, y), ResolvedComparis
 private val eq3 = ResolvedArrow(ResolvedComparison("==", x, y), ResolvedArrow(ResolvedComparison("==", y, z), ResolvedComparison("==", x, z)))
 private val neq1 = ResolvedArrow(ResolvedComparison("!=", x, y), ResolvedNot(ResolvedComparison("==", x, y)))
 private val neq2 = ResolvedArrow(ResolvedNot(ResolvedComparison("==", x, y)), ResolvedComparison("!=", x, y))
+private val less1 = ResolvedArrow(ResolvedComparison("<", x, y), ResolvedArrow(ResolvedComparison("<", y, z), ResolvedComparison("<", x, z)))
+private val less2 = ResolvedArrow(ResolvedComparison("<", x, y), ResolvedArrow(ResolvedComparison("<=", y, z), ResolvedComparison("<", x, z)))
+private val less3 = ResolvedArrow(ResolvedComparison("<=", x, y), ResolvedArrow(ResolvedComparison("<", y, z), ResolvedComparison("<", x, z)))
+private val less4 = ResolvedArrow(ResolvedComparison("<=", x, y), ResolvedArrow(ResolvedComparison("<=", y, z), ResolvedComparison("<=", x, z)))
+private val greater1 = ResolvedArrow(ResolvedComparison(">", x, y), ResolvedArrow(ResolvedComparison(">", y, z), ResolvedComparison(">", x, z)))
+private val greater2 = ResolvedArrow(ResolvedComparison(">", x, y), ResolvedArrow(ResolvedComparison(">=", y, z), ResolvedComparison(">", x, z)))
+private val greater3 = ResolvedArrow(ResolvedComparison(">=", x, y), ResolvedArrow(ResolvedComparison(">", y, z), ResolvedComparison(">", x, z)))
+private val greater4 = ResolvedArrow(ResolvedComparison(">=", x, y), ResolvedArrow(ResolvedComparison(">=", y, z), ResolvedComparison(">=", x, z)))
+private val lg1 = ResolvedArrow(ResolvedComparison("<", x, y), ResolvedComparison(">", y, x))
+private val lg2 = ResolvedArrow(ResolvedComparison(">", y, x), ResolvedComparison("<", x, y))
+private val lg3 = ResolvedArrow(ResolvedComparison("<=", y, x), ResolvedComparison(">=", x, y))
+private val lg4 = ResolvedArrow(ResolvedComparison(">=", y, x), ResolvedComparison("<=", x, y))
+private val lg5 = ResolvedArrow(ResolvedComparison("<", x, y), ResolvedNot(ResolvedComparison(">=", x, y)))
+private val lg6 = ResolvedArrow(ResolvedNot(ResolvedComparison(">=", x, y)), ResolvedComparison("<", x, y))
+private val lg7 = ResolvedArrow(ResolvedComparison(">", x, y), ResolvedNot(ResolvedComparison("<=", x, y)))
+private val lg8 = ResolvedArrow(ResolvedNot(ResolvedComparison("<=", x, y)), ResolvedComparison(">", x, y))
 
-private val strictNumericAxiomList = listOf(eq1, eq2, eq3, neq1, neq2)
+private val strictNumericAxiomList = listOf(
+    eq1, eq2, eq3,
+    neq1, neq2,
+    less1, less2, less3, less4,
+    greater1, greater2, greater3, greater4,
+    lg1, lg2, lg3, lg4, lg5, lg6, lg7, lg8
+)
 
 private val axiomList = logicAxiomList + strictNumericAxiomList

@@ -32,6 +32,7 @@ expressionList
 
 codeExpression
     :   INT                                                                         #intLiteral
+    |   value=('true' | 'false')                                                    #boolLiteral
     |   name=IDENT '(' expressionList ')'                                           #invocation
     |   name=IDENT                                                                  #symbolReference
     |   '!' codeExpression                                                          #negate

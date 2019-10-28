@@ -24,6 +24,8 @@ APPEND_ARROW:   '+>';
 
 FUN_KW:         'fun';
 VAR_KW:         'var';
+TRUE_KW:        'true';
+FALSE_KW:       'false';
 
 IDENT:          [a-zA-Z_]+ [a-zA-Z0-9_]*;
 INT:            '-'? [0-9]+;

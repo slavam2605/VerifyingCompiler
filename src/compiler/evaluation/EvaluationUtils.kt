@@ -7,6 +7,7 @@ fun ResolvedExpression.evaluate(): Value? = when (this) {
     is ResolvedInvocation -> null
     is ResolvedSymbolReference -> null
     is ResolvedIntegerLiteral -> StrictInt64Value(value)
+    is ResolvedBooleanLiteral -> BooleanValue(value)
     is ResolvedComparison -> evaluateComparison(this)
     is ResolvedNot -> evaluateNot(this)
     is ResolvedOr -> evaluateOr(this)
